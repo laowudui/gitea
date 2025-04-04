@@ -1,0 +1,38 @@
+name: upgrade
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/upgrade.yml
+
+env:
+  VERSION: v1.23.6
+
+jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: go-gitea/gitea
+          ref: ${{ env.VERSION }}
+          path: gitea-${{ env.VERSION }}
+
+      - name: Auto commit changes and Push
+        run: |
+          rm -rf gitea && mv gitea-${{ env.VERSION }} gitea
+          rm -rf gitea/.git
+          git add .
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "No changes!"
+            exit 0
+          fi
+          git config --local user.name  "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -m "${{ env.VERSION }}"
+          git push
